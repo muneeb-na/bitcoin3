@@ -7,63 +7,123 @@
     <title>Live Bitcoin Portfolio</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,400&display=swap" rel="stylesheet" />
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
-            background: #0f172a;
-            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1c2b4a);
+            color: #ffffff;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 2rem;
             text-align: center;
-            margin: 0;
-            padding: 0 1rem;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
         .top-text {
-            font-family: 'Montserrat', sans-serif;
             font-style: italic;
             font-weight: 400;
-            font-size: clamp(1.2rem, 2vw, 2rem);
+            font-size: clamp(1.2rem, 2.5vw, 2rem);
             margin-bottom: 1rem;
-            color: #b0bec5;
+            color: #80deea;
             user-select: none;
+        }
+
+        h1, h2 {
+            margin-bottom: 1rem;
         }
 
         h1 {
             font-size: clamp(2rem, 5vw, 3rem);
-            margin: 0.2rem 0;
+            color: #00e5ff;
         }
 
         h2 {
-            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: 400;
+            color: #cfd8dc;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .highlight {
+            color: #4dd0e1;
+            font-weight: bold;
+        }
+
+        .loss {
+            color: #ff8a80;
+            font-weight: bold;
         }
 
         #price,
         #btcValueUSD,
         #btcValuePKR {
-            font-size: clamp(1.5rem, 3vw, 2rem);
-            margin-top: 10px;
+            font-size: 1.5rem;
+            font-weight: 500;
             transition: all 0.5s ease-in-out;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                padding: 1.2rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            #price,
+            #btcValueUSD,
+            #btcValuePKR {
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="top-text">welcome Muneeb</div>
+    <div class="container">
+        <div class="top-text">welcome Muneeb</div>
 
-    <h1>Bitcoin Portfolio</h1>
-    <h1>Live Bitcoin Price: <span id="price">$0.00</span></h1>
+        <h1>Bitcoin Portfolio</h1>
+        <div id="price">$0.00</div>
 
-    <h2>Your Bitcoin Assets:</h2>
-    <p id="btcValueUSD">Your Bitcoin Value: $0.00</p>
-    <p id="btcValuePKR">Your Bitcoin Value: PKR 0.00</p>
+        <h2>Your Bitcoin Assets: <span class="highlight">0.000045141</span></h2>
+        <div id="btcValueUSD">Your Bitcoin Value: $0.00</div>
+        <div id="btcValuePKR">Your Bitcoin Value: PKR 0.00</div>
+
+        <h2>Total Loss in PKR:</h2>
+        <div class="loss" id="loosinpkr">Loading...</div>
+
+        <h2>Total Loss in USD:</h2>
+        <div class="loss" id="lossinusd">Loading...</div>
+    </div>
 
     <script>
-        const myBitcoin =  0.000045141;
+        const myBitcoin = 0.000045141;
+        const myprice = 1500;
 
-        // Count-up animation function
         function animateValue(element, start, end, duration) {
             let startTimestamp = null;
             const step = (timestamp) => {
@@ -88,21 +148,17 @@
 
         async function fetchBitcoinPrice() {
             try {
-                // Fetch Bitcoin price in USD
                 const btcResponse = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
                 const btcData = await btcResponse.json();
                 const btcPriceUSD = parseFloat(btcData.price);
 
-                // Fetch USD to PKR conversion rate
                 const pkrResponse = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
                 const pkrData = await pkrResponse.json();
                 const usdToPkrRate = pkrData.rates.PKR;
 
-                // Calculate Bitcoin value
                 const myBitcoinValueUSD = myBitcoin * btcPriceUSD;
                 const myBitcoinValuePKR = myBitcoinValueUSD * usdToPkrRate;
 
-                // Animate updates
                 const priceElement = document.getElementById('price');
                 const usdElement = document.getElementById('btcValueUSD');
                 const pkrElement = document.getElementById('btcValuePKR');
@@ -111,13 +167,15 @@
                 animateValue(usdElement, parseFloat(usdElement.innerText.replace('Your Bitcoin Value: $', '')) || 0, myBitcoinValueUSD, 1000);
                 animateValue(pkrElement, parseFloat(pkrElement.innerText.replace('Your Bitcoin Value: PKR ', '')) || 0, myBitcoinValuePKR, 1000);
 
+                document.getElementById('loosinpkr').innerText = (myBitcoinValuePKR - myprice).toFixed(2);
+                document.getElementById('lossinusd').innerText = (myBitcoinValueUSD - 5.28).toFixed(2);
+
             } catch (error) {
                 document.getElementById('price').innerText = 'Error fetching price!';
                 console.error(error);
             }
         }
 
-        // Fetch price every 3 seconds
         fetchBitcoinPrice();
         setInterval(fetchBitcoinPrice, 3000);
     </script>
